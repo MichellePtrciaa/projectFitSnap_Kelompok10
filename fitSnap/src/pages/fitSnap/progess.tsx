@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
+import { NavLink } from "react-router-dom"
+import Table from "react-bootstrap/Table"
+import ApiClient from "../../utils/ApiClient"
 
 interface Progress {
     _id : string,
@@ -38,7 +41,7 @@ function Progress() {
         <div className="container mx-auto">
             <div className="d-flex justify-content-between mb-3">
                 <h2>Progress</h2>
-                <Navlink to="/add-progress" className="btn btn-primary">Add Progress</Navlink>
+                <NavLink to="/add-progress" className="btn btn-primary">Add Progress</NavLink>
 
                 <Table striped bordered hover size="sm">
                     <thead>
@@ -58,8 +61,8 @@ function Progress() {
                                 </td>
                             </tr>
                         )}
-                        {progress.length > 0 &&
-                            progress.map((item,index) =>(
+                        {progess.length > 0 &&
+                            progess.map((item,index) =>(
                                 <tr key={item._id}>
                                     <td>{index + 1}</td>
                                     <td>
