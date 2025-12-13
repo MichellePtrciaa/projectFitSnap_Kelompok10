@@ -28,6 +28,7 @@
     "vite": "npm:rolldown-vite@7.2.5"
   },
   "dependencies": {
+    "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
     "react-bootstrap": "^2.10.10",
     "react-router": "^7.10.1",
