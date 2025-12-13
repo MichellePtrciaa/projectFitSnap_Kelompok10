@@ -2,18 +2,18 @@ import { createBrowserRouter } from "react-router";
 
 const router = createBrowserRouter([
         {
-            path : "/", //alamat dari sebuah page
+            path : "/", 
             children : [
                 {
                     index : true,
                     lazy : {
                         Component : async() => {
-                            const component = await import("")
+                            const component = await import("../pages/fitSnap/progress.tsx")
                             return component.default
                         }
                     }
                 },
-                  {
+                {
                 path : "signUp",
                 lazy : {
                     Component : async() => {
@@ -22,11 +22,20 @@ const router = createBrowserRouter([
                     }
                 }
             },
-             {
+            {
                 path : "signIn",
                 lazy : {
                     Component : async() => {
                         const component = await import("../pages/auth/signIn/signIn.tsx")
+                        return component.default
+                    }
+                }
+            },
+            {
+                path : "add-progress",
+                lazy : {
+                    Component : async() => {
+                        const component = await import("../pages/fitSnap/addProgress.tsx")
                         return component.default
                     }
                 }
