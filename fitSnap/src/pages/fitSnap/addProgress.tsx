@@ -4,6 +4,7 @@ import ApiClient from "../../utils/ApiClient"
 import { Button } from "react-bootstrap"
 
 function addProgress(){
+    
     const navigate = useNavigate()
 
     const [userId, setUserId] = useState<string>("")
@@ -16,28 +17,40 @@ function addProgress(){
     setLoading(true)
 
     try {
+        const token = localStorage.getItem("token") 
+        console.log("TOKEN:", token)
+
+
+        if (!token) {
+        alert("Silakan login terlebih dahulu")
+        setLoading(false)
+        return
+        }
+
         const formData = new FormData()
         formData.append("description", description)
 
         if (image) {
-        formData.append("image", image) 
+        formData.append("image", image)
         }
 
-        const response = await ApiClient.post("/progress", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-            })
+    const response = await ApiClient.post("/progress", formData, {
+        headers: {
+            Authorization: `Bearer ${token}`, 
+        },
+        })
 
-            if (response.status === 201 || response.status === 200) {
-            navigate("/progress")
-            }
+        if (response.status === 200 || response.status === 201) {
+        navigate("/progress")
+        }
         } catch (error) {
-            console.error(error)
+            console.error("Add progress error:", error)
+            alert("Gagal menambahkan progress")
         } finally {
             setLoading(false)
         }
     }
+
 
     return (
         <div className="container mt-4">
@@ -88,6 +101,7 @@ function addProgress(){
             </form>
         </div>
     )
+    
 }
 
 export default addProgress
