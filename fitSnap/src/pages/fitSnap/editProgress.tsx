@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import { NavLink, useNavigate } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router"
 import ApiClient from "../../utils/ApiClient"
 import { Button } from "react-bootstrap"
 
