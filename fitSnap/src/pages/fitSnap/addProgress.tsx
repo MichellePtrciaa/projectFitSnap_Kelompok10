@@ -6,7 +6,7 @@ function addProgress(){
     const navigate = useNavigate()
 
     const [userId, setUserId] = useState<string>("")
-    const [imageUrl, setImageUrl] = useState<string>("")
+    const [imageUrl, setImageUrl] = useState<File | null>(null)
     const [description, setDescription] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(false)
 
@@ -46,10 +46,14 @@ function addProgress(){
                 <div className="mb-3">
                     <label className="form-label">Image URL</label>
                     <input
-                        type="text"
+                        type="file"
                         className="form-control"
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
+                        accept="image/*"
+                        onChange={(e) => {
+                            if (e.target.files && e.target.files[0]){
+                                setImageUrl(e.target.files[0])
+                            }
+                        }}
                         required
                     />
                 </div>
