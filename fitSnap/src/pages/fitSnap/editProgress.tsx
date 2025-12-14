@@ -3,59 +3,35 @@ import { NavLink, useNavigate } from "react-router-dom"
 import ApiClient from "../../utils/ApiClient"
 import { Button } from "react-bootstrap"
 
-function addProgress(){
-    
+function editProgress(){
     const navigate = useNavigate()
 
     const [userId, setUserId] = useState<string>("")
-    const [image, setImageUrl] = useState<File | null>(null)
+    const [imageUrl, setImageUrl] = useState<File | null>(null)
     const [description, setDescription] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+        e.preventDefault()
+        setLoading(true)
 
-    try {
-        const token = localStorage.getItem("token") 
-        console.log("TOKEN:", token)
-
-
-        if (!token) {
-        alert("Silakan login terlebih dahulu")
-        setLoading(false)
-        return
-        }
-
-        const formData = new FormData()
-        formData.append("description", description)
-
-        if (image) {
-        formData.append("image", image)
-        }
-
-    const response = await ApiClient.post("/progress", formData, {
-        headers: {
-            Authorization: `Bearer ${token}`, 
-        },
+        const response = await ApiClient.post("/progress", {
+            userId,
+            imageUrl,
+            description
         })
 
-        if (response.status === 200 || response.status === 201) {
-        navigate("/progress")
+        if (response.status === 201 || response.status === 200) {
+            navigate("/progress")
         }
-        } catch (error) {
-            console.error("Add progress error:", error)
-            alert("Gagal menambahkan progress")
-        } finally {
-            setLoading(false)
-        }
-    }
 
+        setLoading(false)
+    }
 
     return (
         <div className="container mt-4">
-            <h2>Add Progress</h2>
-            <NavLink to="/" className ="btn btn-primary">List Workout</NavLink>
+            <h2>Edit Progress</h2>
+            <NavLink to="/" className ="btn btn-primary">Progress workout</NavLink>
 
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
@@ -101,7 +77,6 @@ function addProgress(){
             </form>
         </div>
     )
-    
 }
 
-export default addProgress
+export default editProgress
