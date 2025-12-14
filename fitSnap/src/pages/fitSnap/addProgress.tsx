@@ -36,72 +36,72 @@ function addProgress(){
 
     const response = await ApiClient.post("/progress", formData, {
         headers: {
-            Authorization: `Bearer ${token}`, 
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`, // <--- pastikan Bearer + token
         },
-        })
-
-        if (response.status === 200 || response.status === 201) {
-        navigate("/progress")
-        }
-        } catch (error) {
-            console.error("Add progress error:", error)
-            alert("Gagal menambahkan progress")
-        } finally {
-            setLoading(false)
-        }
+      });
+      console.log("SUCCESS:", response.data);
+      alert("Progress berhasil ditambahkan");
+      // Reset form
+      setForm({ UserId: "", description: "" });
+      setImageFile(null);
+    } catch (error: any) {
+      console.error("ERROR:", error.response?.data || error.message);
+      alert(
+        "Gagal menyimpan progress: " +
+          (error.response?.data?.error || error.message)
+      );
     }
+  };
 
+  return (
+    <div className="container mx-auto">
+      <h2>Add Progress Page</h2>
+      <NavLink to="/" className="btn btn-primary mb-3">
+        List Progress
+      </NavLink>
 
-    return (
-        <div className="container mt-4">
-            <h2>Add Progress</h2>
-            <NavLink to="/" className ="btn btn-primary">List Workout</NavLink>
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label>User Id</Form.Label>
+          <Form.Control
+            type="text"
+            name="UserId"
+            value={form.UserId}
+            onChange={handleInputChange}
+            placeholder="Masukkan User Id"
+            required
+          />
+        </Form.Group>
 
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label className="form-label">User ID</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        value={userId}
-                        onChange={(e) => setUserId(e.target.value)}
-                        required
-                    />
-                </div>
+        <Form.Group className="mb-3">
+          <Form.Label>Image</Form.Label>
+          <Form.Control
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            required
+          />
+        </Form.Group>
 
-                <div className="mb-3">
-                    <label className="form-label">Image URL</label>
-                    <input
-                        type="file"
-                        className="form-control"
-                        accept="image/*"
-                        onChange={(e) => {
-                            if (e.target.files && e.target.files[0]){
-                                setImageUrl(e.target.files[0])
-                            }
-                        }}
-                        required
-                    />
-                </div>
+        <Form.Group className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            type="text"
+            name="description"
+            value={form.description}
+            onChange={handleInputChange}
+            placeholder="Deskripsi progress"
+            required
+          />
+        </Form.Group>
 
-                <div className="mb-3">
-                    <label className="form-label">Description</label>
-                    <textarea
-                        className="form-control"
-                        rows={3}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <Button type = "submit" variant = "primary">
-                    Save
-                </Button>
-            </form>
-        </div>
-    )
-    
+        <Button type="submit" variant="primary">
+          Simpan
+        </Button>
+      </Form>
+    </div>
+  );
 }
 
-export default addProgress
+export default AddProgress;
