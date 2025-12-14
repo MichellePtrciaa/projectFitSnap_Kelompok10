@@ -40,7 +40,7 @@ function Progress() {
     return (
         <div className="container mx-auto">
         <div className="d-flex justify-content-between mb-3">
-            <h2>Progress Page</h2>
+            <h2>Progress</h2>
             <NavLink to="/add-progress" className="btn btn-primary">
             Add Progress
             </NavLink>
@@ -72,7 +72,7 @@ function Progress() {
                     <td>{item.userId}</td>
                     <td>
                         <img
-                        src={item.imageUrl}
+                        src={`http://localhost:3000/${item.imageUrl}`}
                         alt="progress"
                         width={60}
                         height={60}

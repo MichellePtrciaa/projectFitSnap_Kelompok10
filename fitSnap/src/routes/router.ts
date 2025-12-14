@@ -40,6 +40,15 @@ const router = createBrowserRouter([
                     }
                 }
             },
+            {
+                path : "/progress",
+                lazy : {
+                    Component : async() => {
+                        const component = await import("../pages/fitSnap/progress.tsx")
+                        return component.default
+                    }
+                }
+            },
             ]
         }
     ])
