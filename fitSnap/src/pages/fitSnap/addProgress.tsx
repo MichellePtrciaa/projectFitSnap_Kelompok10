@@ -3,105 +3,72 @@ import { NavLink, useNavigate } from "react-router"
 import ApiClient from "../../utils/ApiClient"
 import { Button } from "react-bootstrap"
 
-function addProgress(){
+function addProgress(){ 
     
     const navigate = useNavigate()
 
-    const [userId, setUserId] = useState<string>("")
+    const [userId, setUserId] = useState<string>("") 
     const [image, setImageUrl] = useState<File | null>(null)
-    const [description, setDescription] = useState<string>("")
+    const [description, setDescription] = useState<string>("") 
     const [loading, setLoading] = useState<boolean>(false)
 
-    const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    const handleSubmit = async (e: React.FormEvent) => { 
+        e.preventDefault() 
+        setLoading(true)
 
-    try {
-        const token = localStorage.getItem("token") 
-        console.log("TOKEN:", token)
+        try { 
+            const token = localStorage.getItem("token") 
+            console.log("TOKEN:", token)
 
+            if (!token) { 
+                alert("Silakan login terlebih dahulu") 
+                setLoading(false) 
+                return 
+            }
 
-        if (!token) {
-        alert("Silakan login terlebih dahulu")
-        setLoading(false)
-        return
-        }
+            const formData = new FormData() 
+            formData.append("description", description)
 
-        const formData = new FormData()
-        formData.append("description", description)
+            if (image) { 
+                formData.append("image", image) 
+            }
 
-        if (image) {
-        formData.append("image", image)
-        }
+            const response = await ApiClient.post("/progress", formData, { 
+                headers: { 
+                    Authorization: `Bearer ${token}`, 
+                }, 
+            })
 
-    const response = await ApiClient.post("/progress", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`, // <--- pastikan Bearer + token
-        },
-      });
-      console.log("SUCCESS:", response.data);
-      alert("Progress berhasil ditambahkan");
-      // Reset form
-      setForm({ UserId: "", description: "" });
-      setImageFile(null);
-    } catch (error: any) {
-      console.error("ERROR:", error.response?.data || error.message);
-      alert(
-        "Gagal menyimpan progress: " +
-          (error.response?.data?.error || error.message)
-      );
+            if (response.status === 200 || response.status === 201) { 
+                navigate("/progress") 
+            } 
+            } catch (error) { 
+                console.error("Add progress error:", error) 
+                alert("Gagal menambahkan progress") 
+            } finally { 
+                setLoading(false)
+                } 
+            }
+
+            return ( 
+            <div className="container mt-4"> 
+            <h2>Add Progress</h2> 
+            <NavLink to="/" className ="btn btn-primary">List Workout</NavLink>
+
+            <form onSubmit={handleSubmit}> 
+            <div className="mb-3"> 
+            <label className="form-label">User ID</label>
+
+            <input type="text" className="form-control" value={userId} onChange={(e) => setUserId(e.target.value)} required /> </div>
+
+            <div className="mb-3"> <label className="form-label">Image URL</label>
+            <input type="file" className="form-control" accept="image/*" onChange={(e) => { if (e.target.files && e.target.files[0]){ setImageUrl(e.target.files[0]) } }} required /> </div>
+            <div className="mb-3"> <label className="form-label">Description</label> <textarea className="form-control" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} required /> </div>
+
+            <Button type = "submit" variant = "primary"> Save </Button>
+            </form> 
+            </div> 
+        ) 
     }
-  };
 
-  return (
-    <div className="container mx-auto">
-      <h2>Add Progress Page</h2>
-      <NavLink to="/" className="btn btn-primary mb-3">
-        List Progress
-      </NavLink>
-
-      <Form onSubmit={handleSubmit}>
-        <Form.Group className="mb-3">
-          <Form.Label>User Id</Form.Label>
-          <Form.Control
-            type="text"
-            name="UserId"
-            value={form.UserId}
-            onChange={handleInputChange}
-            placeholder="Masukkan User Id"
-            required
-          />
-        </Form.Group>
-
-        <Form.Group className="mb-3">
-          <Form.Label>Image</Form.Label>
-          <Form.Control
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            required
-          />
-        </Form.Group>
-
-        <Form.Group className="mb-3">
-          <Form.Label>Description</Form.Label>
-          <Form.Control
-            type="text"
-            name="description"
-            value={form.description}
-            onChange={handleInputChange}
-            placeholder="Deskripsi progress"
-            required
-          />
-        </Form.Group>
-
-        <Button type="submit" variant="primary">
-          Simpan
-        </Button>
-      </Form>
-    </div>
-  );
-}
-
-export default AddProgress;
+export default addProgress
