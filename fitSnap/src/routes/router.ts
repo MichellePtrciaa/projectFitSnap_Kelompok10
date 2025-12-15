@@ -49,6 +49,15 @@ const router = createBrowserRouter([
                     }
                 }
             },
+             {
+                path : "/comment",
+                lazy : {
+                    Component : async() => {
+                        const component = await import("../pages/fitSnap/comment.tsx")
+                        return component.default
+                    }
+                }
+            },
             ]
         }
     ])
