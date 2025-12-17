@@ -68,7 +68,7 @@ function Progress() {
               progress.map((item, index) => (
                 <tr key={item._id}>
                   <td>{index + 1}</td>
-                  <td>{item.userId}</td>
+                  <td>{item.userId?.username}</td>
                   <td>
                     <img
                       src={`http://localhost:3000/${item.imageUrl}`}
