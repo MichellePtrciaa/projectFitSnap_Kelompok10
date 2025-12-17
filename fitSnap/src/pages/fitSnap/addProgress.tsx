@@ -1,90 +1,72 @@
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import ApiClient from "../../utils/ApiClient";
-import { Button } from "react-bootstrap";
+import { useState, type ChangeEvent, type FormEvent } from "react"
+import { Button, Form } from "react-bootstrap"
+import { NavLink, useNavigate } from "react-router"
+import ApiClient from "../../utils/ApiClient"
 
-function addProgress() {
-  const navigate = useNavigate();
+function AddProgress() {
+  const navigate = useNavigate()
 
-  const [image, setImageUrl] = useState<File | null>(null);
-  const [description, setDescription] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [description, setDescription] = useState("")
+  const [image, setImage] = useState<File | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Silakan login terlebih dahulu");
-        setLoading(false);
-        return;
-      }
+  const formData = new FormData();
+  formData.append("description", description);
+  if (image) {
+    formData.append("image", image);
+  }
 
-      const formData = new FormData();
-      formData.append("description", description);
-      if (image) {
-        formData.append("image", image); // nama harus sama dengan upload.single("image")
-      }
+  console.log("description:", description);
+  console.log("image:", image);
 
-      const response = await ApiClient.post("/progress", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  try {
+    const response = await ApiClient.post("/progress", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
-      if (response.status === 200 || response.status === 201) {
-        navigate("/progress");
-      }
-    } catch (error) {
-      console.error("Add progress error:", error);
-      alert("Gagal menambahkan progress");
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log("RESPONSE:", response);
+  } catch (error) {
+    console.error("ERROR POST:", error);
+  }
+};
+
 
   return (
-    <div className="container mt-4">
+    <div className="container mx-auto">
       <h2>Add Progress</h2>
-      <NavLink to="/" className="btn btn-primary">
-        List Workout
+      <NavLink to="/progress" className="btn btn-secondary mb-3">
+        Back
       </NavLink>
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label className="form-label">Image URL</label>
-          <input
-            type="file"
-            className="form-control"
-            accept="image/*"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                setImageUrl(e.target.files[0]);
-              }
-            }}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Description</label>
-          <textarea
-            className="form-control"
-            rows={3}
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <Form.Control
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            required
+            type="text"
           />
-        </div>
+        </Form.Group>
 
-        <Button type="submit" variant="primary" disabled={loading}>
-          {loading ? "Saving..." : "Save"}
-        </Button>
-      </form>
+        <Form.Group className="mb-3">
+          <Form.Label>Photo</Form.Label>
+          <Form.Control
+            type="file"
+            accept="image/*"
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setImage(e.target.files?.[0] || null)
+            }
+          />
+        </Form.Group>
+
+        <Button type="submit">Post</Button>
+      </Form>
     </div>
-  );
+  )
 }
 
-export default addProgress
+export default AddProgress
