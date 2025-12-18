@@ -35,7 +35,7 @@ function SignIn() {
         const response = await ApiClient.post("/signin", form);
 
 if (response.status === 200) {
-  localStorage.setItem("token", response.data.token); // FIXED
+  localStorage.setItem("token", response.data.data.token); // FIXED
   navigate("/progress", { replace: true });
 }
     } catch (error: any) {

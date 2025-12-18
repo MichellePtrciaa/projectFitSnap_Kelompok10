@@ -18,17 +18,19 @@ function AddProgress() {
     formData.append("image", image);
   }
 
-  console.log("description:", description);
-  console.log("image:", image);
+  
 
   try {
+    const token = localStorage.getItem("token"); // ambil token
     const response = await ApiClient.post("/progress", formData, {
       headers: {
+        Authorization: `Bearer ${token}`,   // tambahkan ini
         "Content-Type": "multipart/form-data",
       },
     });
 
     console.log("RESPONSE:", response);
+    navigate("/progress"); // redirect setelah sukses
   } catch (error) {
     console.error("ERROR POST:", error);
   }
