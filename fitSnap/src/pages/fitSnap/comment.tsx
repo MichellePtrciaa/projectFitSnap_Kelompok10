@@ -1,47 +1,40 @@
 import { useCallback, useEffect, useState } from "react";
-import { NavLink } from "react-router"; // gunakan react-router-dom
+import { NavLink, useParams } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
 import { Spinner, Button, Card, Row, Col } from "react-bootstrap";
 
 interface Comment {
   _id: string;
-  userId: string;
-  imageUrl: string;
+  userId: { username: string } | string; // bisa object atau string
+  imageUrl?: string;
   description: string;
   createdAt: string;
   updatedAt: string;
 }
 
 function CommentPage() {
+  const { id } = useParams<{ id: string }>(); // ambil progressId dari URL
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchComments = useCallback(async () => {
-  try {
-    const response = await ApiClient.get("/comment");
-    console.log("API response:", response);
-
-    if (response.status === 200) {
-      const data = response.data;
-
-      // Cek apakah data ada dan berbentuk array
-      const commentsData = Array.isArray(data?.data)
-        ? data.data
-        : Array.isArray(data)
-        ? data
-        : [];
-
-      setComments(commentsData);
-    } else {
-      console.warn("Status bukan 200:", response.status);
+    try {
+      const response = await ApiClient.get(`/comment/${id}`);
+      if (response.status === 200) {
+        const data = response.data;
+        const commentsData = Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data)
+          ? data
+          : [];
+        setComments(commentsData);
+      }
+    } catch (error) {
+      console.error("Gagal fetch komentar:", error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Gagal fetch komentar:", error);
-  } finally {
-    setLoading(false);
-  }
-}, []);
-
+  }, [id]);
 
   useEffect(() => {
     fetchComments();
@@ -49,9 +42,13 @@ function CommentPage() {
 
   const handleDelete = async (commentId: string) => {
     if (window.confirm("Yakin mau hapus komentar ini?")) {
-      const response = await ApiClient.delete(`/comment/${commentId}`);
-      if (response.status === 200) {
-        fetchComments();
+      try {
+        const response = await ApiClient.delete(`/comment/${commentId}`);
+        if (response.status === 200) {
+          fetchComments();
+        }
+      } catch (error) {
+        console.error("Gagal hapus komentar:", error);
       }
     }
   };
@@ -59,14 +56,17 @@ function CommentPage() {
   return (
     <div className="container py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold">💬 Comments</h2>
-        <NavLink to="/add-comment" className="btn btn-primary">
+        <h2 className="fw-bold">💬 Comments for Progress {id}</h2>
+        <NavLink to={`/add-comment/${id}`} className="btn btn-primary">
           ➕ Add Comment
         </NavLink>
       </div>
 
       {loading ? (
-        <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
+        <div
+          className="d-flex justify-content-center align-items-center"
+          style={{ height: "200px" }}
+        >
           <Spinner animation="border" variant="primary" />
         </div>
       ) : comments.length === 0 ? (
@@ -78,14 +78,20 @@ function CommentPage() {
           {comments.map((item) => (
             <Col key={item._id}>
               <Card className="shadow-sm h-100">
-                <Card.Img
-                  variant="top"
-                  src={`http://localhost:3000/${item.imageUrl}`}
-                  alt="comment"
-                  style={{ height: "180px", objectFit: "cover" }}
-                />
+                {item.imageUrl && (
+                  <Card.Img
+                    variant="top"
+                    src={`http://localhost:3000/${item.imageUrl}`}
+                    alt="comment"
+                    style={{ height: "180px", objectFit: "cover" }}
+                  />
+                )}
                 <Card.Body>
-                  <Card.Title className="fw-semibold">{item.userId}</Card.Title>
+                  <Card.Title className="fw-semibold">
+                    {typeof item.userId === "string"
+                      ? item.userId
+                      : item.userId.username}
+                  </Card.Title>
                   <Card.Text>{item.description}</Card.Text>
                   <div className="d-flex justify-content-between">
                     <NavLink

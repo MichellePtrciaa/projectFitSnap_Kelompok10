@@ -40,7 +40,7 @@ const router = createBrowserRouter([
         },
       },
       {
-        path: "comment",
+        path: "comment/:id",
         lazy: async () => {
           const module = await import("../pages/fitSnap/comment");
           return { Component: module.default };
