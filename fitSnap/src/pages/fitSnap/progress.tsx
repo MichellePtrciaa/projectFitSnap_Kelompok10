@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { NavLink } from "react-router";
+import { NavLink } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
 import { type Progress } from "../../models/postModel.ts";
 import { Modal, Button, Form } from "react-bootstrap";
@@ -15,7 +15,7 @@ function ProgressPage() {
   const [editImage, setEditImage] = useState<string | null>(null);
 
   const fetchProgress = useCallback(async () => {
-    const response = await ApiClient.get("/progress");
+    const response = await ApiClient.get("/progress/draft"); // hanya draft
     if (response.status === 200) {
       setProgress(response.data.data || []);
     }
@@ -24,11 +24,6 @@ function ProgressPage() {
   useEffect(() => {
     fetchProgress();
   }, [fetchProgress]);
-
-  const handleLike = async (id: string) => {
-    await ApiClient.post(`/progress/${id}/like`);
-    fetchProgress();
-  };
 
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm("Yakin ingin menghapus progress ini?");
@@ -63,6 +58,15 @@ function ProgressPage() {
     }
   };
 
+  const handlePost = async (id: string) => {
+    try {
+      await ApiClient.put(`/progress/${id}`, { isPosted: true });
+      fetchProgress();
+    } catch (error) {
+      console.error("Gagal mem-publish progress:", error);
+    }
+  };
+
   return (
     <div className={`container py-4 ${darkMode ? "dark-mode" : ""}`}>
       {/* Header */}
@@ -88,7 +92,6 @@ function ProgressPage() {
         {progress.map((item) => (
           <div key={item._id} className="col">
             <div className="card h-100 shadow-sm border-0 modern-card">
-              {/* Image */}
               {item.imageUrl && (
                 <div className="position-relative">
                   <img
@@ -103,7 +106,6 @@ function ProgressPage() {
                 </div>
               )}
 
-              {/* Body */}
               <div className="card-body">
                 <h6 className="fw-semibold mb-1">@{item.userId.username}</h6>
                 <p className="text-muted small mb-2">
@@ -115,35 +117,27 @@ function ProgressPage() {
                 </p>
 
                 {/* Actions */}
-                <div className="d-flex justify-content-between align-items-center">
+                <div className="d-flex justify-content-end gap-2">
                   <button
-                    className="btn btn-sm btn-outline-danger btn-pill btn-like"
-                    onClick={() => handleLike(item._id)}
+                    className="btn btn-sm btn-outline-warning btn-pill"
+                    onClick={() =>
+                      handleEditOpen(item._id, item.description, item.imageUrl)
+                    }
                   >
-                    ❤️ {item.likes}
+                    ✏️ Edit
                   </button>
-                  <div className="d-flex gap-2">
-                    <NavLink
-                      to={`/comment/${item._id}`}
-                      className="btn btn-sm btn-outline-info btn-pill"
-                    >
-                      💬
-                    </NavLink>
-                    <button
-                      className="btn btn-sm btn-outline-warning btn-pill"
-                      onClick={() =>
-                        handleEditOpen(item._id, item.description, item.imageUrl)
-                      }
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="btn btn-sm btn-outline-secondary btn-pill"
-                      onClick={() => handleDelete(item._id)}
-                    >
-                      🗑️
-                    </button>
-                  </div>
+                  <button
+                    className="btn btn-sm btn-outline-secondary btn-pill"
+                    onClick={() => handleDelete(item._id)}
+                  >
+                    🗑️ Delete
+                  </button>
+                  <button
+                    className="btn btn-sm btn-outline-success btn-pill"
+                    onClick={() => handlePost(item._id)}
+                  >
+                    🚀 Post
+                  </button>
                 </div>
               </div>
             </div>

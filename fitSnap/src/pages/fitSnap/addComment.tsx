@@ -1,48 +1,43 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
 
 function AddComment() {
-  const [userId, setUserId] = useState("");
+  const { id } = useParams<{ id: string }>(); // progressId dari URL
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const response = await ApiClient.post("/comment", {
-      userId,
-      description,
-      imageUrl,
-    });
-    if (response.status === 201) {
-      navigate("/comment"); // kembali ke halaman list comment
+    try {
+      const response = await ApiClient.post(`/comment/${id}`, {
+        description,
+        imageUrl,
+      });
+      if (response.status === 201) {
+        navigate(`/comment/${id}`); // balik ke halaman komentar progress ini
+      }
+    } catch (error) {
+      console.error("Gagal tambah komentar:", error);
     }
   };
 
   return (
-    <div className="container">
-      <h2>Add Comment</h2>
+    <div className="container py-4">
+      <h2 className="fw-bold">➕ Add Comment</h2>
       <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label>User ID</label>
-          <input
-            type="text"
-            className="form-control"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-          />
-        </div>
         <div className="mb-3">
           <label>Description</label>
           <textarea
             className="form-control"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            required
           />
         </div>
         <div className="mb-3">
-          <label>Image URL</label>
+          <label>Image URL (opsional)</label>
           <input
             type="text"
             className="form-control"
