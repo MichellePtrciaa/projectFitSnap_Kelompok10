@@ -7,7 +7,7 @@ const router = createBrowserRouter([
       {
         index: true,
         lazy: async () => {
-          const module = await import("../pages/Dashboard");
+          const module = await import("../pages/auth/signIn/signIn");
           return { Component: module.default };
         },
       },
