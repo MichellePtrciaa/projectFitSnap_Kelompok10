@@ -49,6 +49,7 @@ function Dashboard() {
         <h2 className="fw-bold text-gradient">✨ FITSNAP</h2>
         <div className="d-flex gap-2">
           <NavLink to="/signin" className="btn btn-outline-primary">Log Out</NavLink>
+          <NavLink to="/progress" className="btn btn-outline-primary">My Progress</NavLink>
           <Button 
             variant="primary" 
             size="sm" 
