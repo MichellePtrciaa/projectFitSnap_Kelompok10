@@ -47,7 +47,7 @@ const router = createBrowserRouter([
         },
       },
       {
-        path: "dashboard",
+        path: "post",
         lazy: async () => {
           const module = await import("../pages/Dashboard");
           return { Component: module.default };

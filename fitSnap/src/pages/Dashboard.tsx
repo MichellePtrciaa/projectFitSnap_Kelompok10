@@ -5,7 +5,7 @@ import { Spinner, Card, Button } from "react-bootstrap";
 import { FaHeart, FaCommentDots, FaUserCircle } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 
-interface Progress {
+interface Post {
   _id: string;
   userId: string;
   imageUrl: string;
@@ -15,33 +15,33 @@ interface Progress {
 }
 
 function Dashboard() {
-  const [progress, setProgress] = useState<Progress[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchProgress = useCallback(async () => {
+  const fetchPosts = useCallback(async () => {
     try {
-      const response = await ApiClient.get("/dashboard");
+      const response = await ApiClient.get("/post");
 
       if (response.status === 200) {
         const data = response.data;
-        const progressData = Array.isArray(data?.data)
+        const postData = Array.isArray(data?.data)
           ? data.data
           : Array.isArray(data)
           ? data
           : [];
 
-        setProgress(progressData);
+        setPosts(postData);
       }
     } catch (error) {
-      console.error("Gagal fetch progress:", error);
+      console.error("Gagal fetch posts:", error);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchProgress();
-  }, [fetchProgress]);
+    fetchPosts();
+  }, [fetchPosts]);
 
   return (
     <div className="container py-4" style={{ maxWidth: "640px" }}>
@@ -59,16 +59,17 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* Body */}
       {loading ? (
         <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
           <Spinner animation="border" variant="primary" />
         </div>
-      ) : progress.length === 0 ? (
+      ) : posts.length === 0 ? (
         <div className="text-center text-muted">
-          <p>Belum ada progress yang dibagikan pengguna lain.</p>
+          <p>Belum ada postingan yang dibagikan pengguna lain.</p>
         </div>
       ) : (
-        progress.map(item => (
+        posts.map(item => (
           <Card key={item._id} className="mb-4 border-0 shadow-sm">
             <Card.Body className="p-0">
               <div className="d-flex justify-content-between align-items-center px-3 pt-3">
@@ -83,10 +84,11 @@ function Dashboard() {
                   </div>
                 </div>
               </div>
+
               <div className="mt-2">
                 <img
                   src={`http://localhost:3000/${item.imageUrl}`}
-                  alt="progress"
+                  alt="post"
                   className="img-fluid"
                   style={{
                     width: "100%",
@@ -101,7 +103,7 @@ function Dashboard() {
 
                 <div className="d-flex align-items-center gap-3">
                   <Button variant="link" className="text-danger p-0">
-                    <FaHeart /> {item.likes.length}
+                    <FaHeart /> {item.likes?.length ?? 0}
                   </Button>
                   <Button variant="link" className="text-muted p-0">
                     <FaCommentDots /> Comment

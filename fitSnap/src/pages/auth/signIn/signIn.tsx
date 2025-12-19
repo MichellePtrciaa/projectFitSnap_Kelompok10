@@ -36,7 +36,7 @@ function SignIn() {
 
 if (response.status === 200) {
   localStorage.setItem("token", response.data.data.token); // FIXED
-  navigate("/dashboard", { replace: true });
+  navigate("/post", { replace: true });
 }
     } catch (error: any) {
         if (error.response) {
