@@ -2,10 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 import { NavLink } from "react-router";
 import ApiClient from "../../utils/ApiClient";
 import { type Progress } from "../../models/postModel.ts";
+import { Modal, Button, Form } from "react-bootstrap";
 
 function ProgressPage() {
   const [progress, setProgress] = useState<Progress[]>([]);
   const [darkMode, setDarkMode] = useState(false);
+
+  // state untuk modal edit
+  const [showEdit, setShowEdit] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editDesc, setEditDesc] = useState("");
+  const [editImage, setEditImage] = useState<string | null>(null);
 
   const fetchProgress = useCallback(async () => {
     const response = await ApiClient.get("/progress");
@@ -21,6 +28,39 @@ function ProgressPage() {
   const handleLike = async (id: string) => {
     await ApiClient.post(`/progress/${id}/like`);
     fetchProgress();
+  };
+
+  const handleDelete = async (id: string) => {
+    const confirmDelete = window.confirm("Yakin ingin menghapus progress ini?");
+    if (!confirmDelete) return;
+
+    try {
+      await ApiClient.delete(`/progress/${id}`);
+      fetchProgress();
+    } catch (error) {
+      console.error("Gagal menghapus progress:", error);
+    }
+  };
+
+  const handleEditOpen = (id: string, currentDesc: string, imageUrl?: string) => {
+    setEditId(id);
+    setEditDesc(currentDesc);
+    setEditImage(imageUrl ? `http://localhost:3000/${imageUrl}` : null);
+    setShowEdit(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editId) return;
+    try {
+      await ApiClient.put(`/progress/${editId}`, { description: editDesc });
+      setShowEdit(false);
+      setEditId(null);
+      setEditDesc("");
+      setEditImage(null);
+      fetchProgress();
+    } catch (error) {
+      console.error("Gagal edit progress:", error);
+    }
   };
 
   return (
@@ -82,18 +122,72 @@ function ProgressPage() {
                   >
                     ❤️ {item.likes}
                   </button>
-                  <NavLink
-                    to={`/comment/${item._id}`}
-                    className="btn btn-sm btn-outline-info btn-pill"
-                  >
-                    💬 Comment
-                  </NavLink>
+                  <div className="d-flex gap-2">
+                    <NavLink
+                      to={`/comment/${item._id}`}
+                      className="btn btn-sm btn-outline-info btn-pill"
+                    >
+                      💬
+                    </NavLink>
+                    <button
+                      className="btn btn-sm btn-outline-warning btn-pill"
+                      onClick={() =>
+                        handleEditOpen(item._id, item.description, item.imageUrl)
+                      }
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-secondary btn-pill"
+                      onClick={() => handleDelete(item._id)}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Edit Modal */}
+      <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Progress</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {editImage && (
+            <div className="mb-3 text-center">
+              <img
+                src={editImage}
+                alt="preview"
+                className="img-fluid rounded shadow-sm"
+                style={{ maxHeight: "200px", objectFit: "cover" }}
+              />
+            </div>
+          )}
+          <Form>
+            <Form.Group>
+              <Form.Label>Deskripsi</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEdit(false)}>
+            Batal
+          </Button>
+          <Button variant="primary" onClick={handleEditSave}>
+            Simpan
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
