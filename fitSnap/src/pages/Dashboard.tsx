@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import ApiClient from "../utils/ApiClient";
 import CommentSection from "../components/CommentSection";
-import { Spinner, Card, Button, Badge } from "react-bootstrap";
+import { Spinner, Card, Button } from "react-bootstrap";
+import { FaHeart, FaCommentDots, FaUserCircle } from "react-icons/fa";
+import { NavLink } from "react-router-dom";
 
 interface Progress {
   _id: string;
   userId: string;
   imageUrl: string;
-  description: string;
+  caption: string;
   likes: string[];
   createdAt: string;
 }
@@ -18,7 +20,7 @@ function Dashboard() {
 
   const fetchProgress = useCallback(async () => {
     try {
-      const response = await ApiClient.get("/progress");
+      const response = await ApiClient.get("/dashboard");
 
       if (response.status === 200) {
         const data = response.data;
@@ -42,77 +44,74 @@ function Dashboard() {
   }, [fetchProgress]);
 
   return (
-    <div className="container py-4" style={{ maxWidth: "720px" }}>
-      {/* Header */}
-      <div className="mb-4 text-center">
-        <h2 className="fw-bold">🏃‍♀️ FitSnap Dashboard</h2>
-        <p className="text-muted">
-          Lihat dan dukung progress olahraga teman-temanmu
-        </p>
+    <div className="container py-4" style={{ maxWidth: "640px" }}>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold text-gradient">✨ FITSNAP</h2>
+        <div className="d-flex gap-2">
+          <NavLink to="/signin" className="btn btn-outline-primary">Log Out</NavLink>
+          <Button 
+            variant="primary" 
+            size="sm" 
+            className="d-flex align-items-center gap-1 rounded-pill px-3"
+          >
+            <FaUserCircle size={18} /> Profile
+          </Button>
+        </div>
       </div>
 
-      {/* Loading */}
       {loading ? (
         <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
           <Spinner animation="border" variant="primary" />
         </div>
       ) : progress.length === 0 ? (
         <div className="text-center text-muted">
-          <p>Belum ada progress yang dibagikan.</p>
+          <p>Belum ada progress yang dibagikan pengguna lain.</p>
         </div>
       ) : (
         progress.map(item => (
-          <Card key={item._id} className="mb-4 shadow-sm border-0">
-            {/* Header Card */}
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-center mb-2">
+          <Card key={item._id} className="mb-4 border-0 shadow-sm">
+            <Card.Body className="p-0">
+              <div className="d-flex justify-content-between align-items-center px-3 pt-3">
                 <div>
-                  <h6 className="mb-0 fw-semibold">{item.userId}</h6>
-                  <small className="text-muted">
+                  <strong>@{item.userId}</strong>
+                  <div className="text-muted small">
                     {new Date(item.createdAt).toLocaleDateString("id-ID", {
                       day: "numeric",
-                      month: "long",
+                      month: "short",
                       year: "numeric",
                     })}
-                  </small>
+                  </div>
                 </div>
-                <Badge bg="success">Progress</Badge>
               </div>
-
-              {/* Image */}
-              <div className="mb-3">
+              <div className="mt-2">
                 <img
                   src={`http://localhost:3000/${item.imageUrl}`}
                   alt="progress"
-                  className="img-fluid rounded"
+                  className="img-fluid"
                   style={{
                     width: "100%",
-                    maxHeight: "320px",
+                    maxHeight: "400px",
                     objectFit: "cover",
                   }}
                 />
               </div>
 
-              {/* Description */}
-              <Card.Text className="mb-2">
-                {item.description}
-              </Card.Text>
+              <div className="px-3 py-2">
+                <p className="mb-2">{item.caption}</p>
 
-              {/* Like */}
-              <div className="d-flex align-items-center gap-2 mb-3">
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                >
-                  ❤️ {item.likes.length}
-                </Button>
-                <span className="text-muted small">
-                  orang menyukai ini
-                </span>
+                <div className="d-flex align-items-center gap-3">
+                  <Button variant="link" className="text-danger p-0">
+                    <FaHeart /> {item.likes.length}
+                  </Button>
+                  <Button variant="link" className="text-muted p-0">
+                    <FaCommentDots /> Comment
+                  </Button>
+                </div>
               </div>
 
-              {/* Comment */}
-              <CommentSection progressId={item._id} />
+              <div className="px-3 pb-3">
+                <CommentSection progressId={item._id} />
+              </div>
             </Card.Body>
           </Card>
         ))
