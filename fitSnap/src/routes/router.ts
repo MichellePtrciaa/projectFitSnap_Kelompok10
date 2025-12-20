@@ -1,4 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
+import React from "react";
+import ProtectedRoute from "./protectedRoute";
 
 const router = createBrowserRouter([
   {
@@ -52,6 +54,18 @@ const router = createBrowserRouter([
           const module = await import("../pages/Dashboard");
           return { Component: module.default };
         },
+      },
+      {
+        element: React.createElement(ProtectedRoute),
+        children: [
+          {
+            path: "profile",
+            lazy: async () => {
+              const module = await import("../pages/profile/profile");
+              return { Component: module.default };
+            },
+          },
+        ],
       },
     ],
   },
