@@ -84,6 +84,10 @@ function ProgressPage() {
           <NavLink to="/add-progress" className="btn btn-dark btn-pill">
             ➕ Add
           </NavLink>
+          {/* Tombol Back ke Dashboard */}
+          <NavLink to="/post" className="btn btn-outline-primary btn-pill">
+            ⬅️ Back to post?
+          </NavLink>
         </div>
       </div>
 

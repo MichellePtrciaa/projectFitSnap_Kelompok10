@@ -12,12 +12,15 @@ interface Post {
   imageUrl: string;
   caption: string;
   likes: string[];
+  comments?: string[];
   createdAt: string;
 }
 
 function Dashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [likedPosts, setLikedPosts] = useState<string[]>([]); // track post yg sudah di-like
   const navigate = useNavigate();
 
   const fetchPosts = useCallback(async () => {
@@ -46,7 +49,18 @@ function Dashboard() {
   const handleLike = async (id: string) => {
     try {
       await ApiClient.post(`/progress/${id}/like`);
-      fetchPosts();
+      // update jumlah like langsung di state
+      setPosts((prev) =>
+        prev.map((post) =>
+          post._id === id
+            ? { ...post, likes: [...post.likes, "dummyUser"] }
+            : post
+        )
+      );
+      // toggle status liked
+      setLikedPosts((prev) =>
+        prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+      );
     } catch (error) {
       console.error("Gagal like post:", error);
     }
@@ -59,11 +73,17 @@ function Dashboard() {
   };
 
   return (
-    <div className="container py-4">
+    <div className={`container py-4 ${darkMode ? "dark-mode" : ""}`}>
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="fw-bold text-gradient">✨ FITSNAP</h2>
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 align-items-center">
+          <button
+            className="btn btn-sm btn-pill btn-toggle"
+            onClick={() => setDarkMode(!darkMode)}
+          >
+            {darkMode ? "☀️ Light" : "🌙 Dark"}
+          </button>
           <NavLink to="/signin" className="btn btn-outline-primary">
             Log Out
           </NavLink>
@@ -83,7 +103,6 @@ function Dashboard() {
 
       {/* Body */}
       {loading ? (
-        // Skeleton shimmer loader saat loading
         <Masonry
           breakpointCols={breakpointColumnsObj}
           className="my-masonry-grid"
@@ -116,7 +135,9 @@ function Dashboard() {
               />
               <div className="card-body">
                 <strong>
-                @{item.userId && typeof item.userId !== "string" ? item.userId.username : item.userId ?? "unknown"}
+                  @{item.userId && typeof item.userId !== "string"
+                    ? item.userId.username
+                    : item.userId ?? "unknown"}
                 </strong>
 
                 <div className="text-muted small mb-2">
@@ -130,13 +151,17 @@ function Dashboard() {
                 <div className="d-flex align-items-center gap-3 mb-2">
                   <Button
                     variant="link"
-                    className="text-danger p-0 btn-like"
+                    className={`p-0 btn-like ${
+                      likedPosts.includes(item._id)
+                        ? "text-danger"
+                        : "text-muted"
+                    }`}
                     onClick={() => handleLike(item._id)}
                   >
                     <FaHeart /> {item.likes?.length ?? 0}
                   </Button>
                   <Button variant="link" className="text-muted p-0">
-                    <FaCommentDots /> Comment
+                    <FaCommentDots /> {item.comments?.length ?? 0} Comment
                   </Button>
                 </div>
                 <CommentSection progressId={item._id} />
