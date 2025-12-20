@@ -3,7 +3,7 @@ import ApiClient from "../utils/ApiClient";
 import CommentSection from "../components/CommentSection";
 import { Button } from "react-bootstrap";
 import { FaHeart, FaCommentDots, FaUserCircle } from "react-icons/fa";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import Masonry from "react-masonry-css";
 
 interface Post {
@@ -18,6 +18,7 @@ interface Post {
 function Dashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -73,6 +74,7 @@ function Dashboard() {
             variant="primary"
             size="sm"
             className="d-flex align-items-center gap-1 rounded-pill px-3"
+            onClick={() => navigate("/profile")}
           >
             <FaUserCircle size={18} /> Profile
           </Button>
@@ -114,8 +116,9 @@ function Dashboard() {
               />
               <div className="card-body">
                 <strong>
-                  @{typeof item.userId === "string" ? item.userId : item.userId.username}
+                @{item.userId && typeof item.userId !== "string" ? item.userId.username : item.userId ?? "unknown"}
                 </strong>
+
                 <div className="text-muted small mb-2">
                   {new Date(item.createdAt).toLocaleDateString("id-ID", {
                     day: "numeric",
