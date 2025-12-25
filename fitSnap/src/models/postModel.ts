@@ -19,3 +19,12 @@ export interface Comment {
     text: string
     createdAt: string
 }
+
+export interface PostModel {
+    _id: string; 
+    userId: string; 
+    caption: string;
+    imageUrl: string; 
+    createdAt: string; 
+    updatedAt: string; 
+}

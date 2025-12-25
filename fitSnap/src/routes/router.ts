@@ -56,6 +56,20 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: "postModel",
+        lazy: async () => {
+          const module = await import("../pages/fitSnap/postModel");
+          return { Component: module.default };
+        },
+      },
+      {
+        path: "addPost",
+        lazy: async () => {
+          const module = await import("../pages/fitSnap/addPost");
+          return { Component: module.default };
+        },
+      },
+      {
         element: React.createElement(ProtectedRoute),
         children: [
           {

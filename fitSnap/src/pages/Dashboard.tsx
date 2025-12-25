@@ -90,6 +90,9 @@ function Dashboard() {
           <NavLink to="/progress" className="btn btn-outline-primary">
             My Progress
           </NavLink>
+          <NavLink to="/postModel" className="btn btn-outline-primary">
+            Post
+          </NavLink>
           <Button
             variant="primary"
             size="sm"
