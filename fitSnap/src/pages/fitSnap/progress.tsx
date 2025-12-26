@@ -58,15 +58,6 @@ function ProgressPage() {
     }
   };
 
-  const handlePost = async (id: string) => {
-    try {
-      await ApiClient.put(`/progress/${id}`, { isPosted: true });
-      fetchProgress();
-    } catch (error) {
-      console.error("Gagal mem-publish progress:", error);
-    }
-  };
-
   return (
     <div className={`container py-4 ${darkMode ? "dark-mode" : ""}`}>
       {/* Header */}
@@ -85,8 +76,8 @@ function ProgressPage() {
             ➕ Add
           </NavLink>
           {/* Tombol Back ke Dashboard */}
-          <NavLink to="/postModel" className="btn btn-outline-primary btn-pill">
-            ⬅️ Post
+          <NavLink to="/post" className="btn btn-outline-primary btn-pill">
+            ⬅️ Dashboard
           </NavLink>
         </div>
       </div>
@@ -135,12 +126,6 @@ function ProgressPage() {
                     onClick={() => handleDelete(item._id)}
                   >
                     🗑️ Delete
-                  </button>
-                  <button
-                    className="btn btn-sm btn-outline-success btn-pill"
-                    onClick={() => handlePost(item._id)}
-                  >
-                    🚀 Post
                   </button>
                 </div>
               </div>

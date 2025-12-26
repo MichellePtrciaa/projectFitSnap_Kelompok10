@@ -1,88 +1,194 @@
-import { useEffect, useState } from "react"
-import { useNavigate, NavLink } from "react-router"
-import ApiClient from "../../utils/ApiClient"
-import { Card, Button, Form } from "react-bootstrap"
-import type { PostModel } from "../../models/postModel"
+import { useCallback, useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
+import ApiClient from "../../utils/ApiClient";
+import { Modal, Button, Form } from "react-bootstrap";
+
+// bikin tipe Post biar lebih konsisten
+type Post = {
+  _id: string;
+  caption: string;
+  imageUrl: string;
+  userId: { username: string };
+  createdAt: string;
+};
 
 function PostPage() {
-  const [posts, setPosts] = useState<PostModel[]>([])
-  const navigate = useNavigate()
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [darkMode, setDarkMode] = useState(false);
+
+  // state untuk modal edit
+  const [showEdit, setShowEdit] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editCaption, setEditCaption] = useState("");
+  const [editImage, setEditImage] = useState<string | null>(null);
+
+  const fetchPosts = useCallback(async () => {
+    try {
+      const response = await ApiClient.get("/post");
+      if (response.status === 200) {
+        const sorted = (response.data.data || []).sort(
+          (a: Post, b: Post) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setPosts(sorted);
+      }
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const token = localStorage.getItem("token")
-        const response = await ApiClient.get("/post", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        setPosts(response.data.data)
-      } catch (error) {
-        console.error("Error fetching posts:", error)
-      }
-    }
+    fetchPosts();
+  }, [fetchPosts]);
 
-    fetchPosts()
-  }, [])
+  const handleDelete = async (id: string) => {
+    const confirmDelete = window.confirm("Yakin ingin menghapus post ini?");
+    if (!confirmDelete) return;
+
+    try {
+      await ApiClient.delete(`/post/${id}`); // ✅ ganti ke /post
+      fetchPosts();
+    } catch (error) {
+      console.error("Gagal menghapus post:", error);
+    }
+  };
+
+  const handleEditOpen = (id: string, currentCaption: string, imageUrl?: string) => {
+    setEditId(id);
+    setEditCaption(currentCaption);
+    setEditImage(imageUrl ? `http://localhost:3000/${imageUrl}` : null);
+    setShowEdit(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editId) return;
+    try {
+      await ApiClient.put(`/post/${editId}`, { caption: editCaption }); // ✅ ganti ke /post
+      setShowEdit(false);
+      setEditId(null);
+      setEditCaption("");
+      setEditImage(null);
+      fetchPosts();
+    } catch (error) {
+      console.error("Gagal edit post:", error);
+    }
+  };
 
   return (
-    <div className="container mt-4">
-      {/* Header dengan judul di kiri dan tombol Add di kanan */}
+    <div className={`container py-4 ${darkMode ? "dark-mode" : ""}`}>
+      {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="fw-bold text-gradient">✨ FITSNAP</h2>
-        <NavLink to="/addPost" className="btn btn-dark btn-pill">
+        <div className="d-flex gap-3 align-items-center">
+          <i className="bi bi-bell-fill fs-5 text-primary"></i>
+          <i className="bi bi-person-circle fs-5 text-secondary"></i>
+          <button
+            className="btn btn-sm btn-pill btn-toggle"
+            onClick={() => setDarkMode(!darkMode)}
+          >
+            {darkMode ? "☀️ Light" : "🌙 Dark"}
+          </button>
+          <NavLink to="/addPost" className="btn btn-dark btn-pill">
             ➕ Add
-        </NavLink>
+          </NavLink>
           {/* Tombol Back ke Dashboard */}
-        <NavLink to="/post" className="btn btn-outline-primary btn-pill">
-            ⬅️ Back to home?
-        </NavLink>
+          <NavLink to="/post" className="btn btn-outline-primary btn-pill">
+            ⬅️ Dashboard
+          </NavLink>
+        </div>
       </div>
 
-      {posts.map((post) => (
-        <Card key={post._id} className="mb-4 shadow-sm">
-          <Card.Body>
-            <Card.Title>@{post.userId}</Card.Title>
-            <Card.Subtitle className="text-muted mb-2">
-              {new Date(post.createdAt).toLocaleDateString("id-ID", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })}
-            </Card.Subtitle>
+      {/* Grid Gallery */}
+      <div className="row row-cols-1 row-cols-md-3 g-4">
+        {posts.map((item) => (
+          <div key={item._id} className="col">
+            <div className="card h-100 shadow-sm border-0 modern-card">
+              {item.imageUrl && (
+                <div className="position-relative">
+                  <img
+                    src={`http://localhost:3000/${item.imageUrl}`}
+                    alt="post"
+                    className="card-img-top rounded"
+                    style={{ objectFit: "cover", height: "220px" }}
+                  />
+                  <div className="overlay d-flex justify-content-center align-items-center">
+                    <span>{item.caption}</span>
+                  </div>
+                </div>
+              )}
 
-            {/* Klik gambar → navigate ke progress */}
-            <div
-              onClick={() => navigate(`/progress/${post._id}`)}
-              style={{ cursor: "pointer" }}
-            >
-              <Card.Img variant="top" src={post.imageUrl} alt={post.caption} />
+              <div className="card-body">
+                <h6 className="fw-semibold mb-1">@{item.userId.username}</h6>
+                <p className="text-muted small mb-2">
+                  {new Date(item.createdAt).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+
+                {/* Actions */}
+                <div className="d-flex justify-content-end gap-2">
+                  <button
+                    className="btn btn-sm btn-outline-warning btn-pill"
+                    onClick={() =>
+                      handleEditOpen(item._id, item.caption, item.imageUrl)
+                    }
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    className="btn btn-sm btn-outline-secondary btn-pill"
+                    onClick={() => handleDelete(item._id)}
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              </div>
             </div>
+          </div>
+        ))}
+      </div>
 
-            <p className="mt-3">{post.caption}</p>
-
-            <div className="d-flex justify-content-between text-muted">
-              <span>0 ❤️</span>
-              <span>0 💬</span>
-            </div>
-
-            <hr />
-            <div>
-              <p className="mb-1">💬 Komentar</p>
-              <p className="text-muted">Belum ada komentar</p>
-              <Form.Control
-                type="text"
-                placeholder="Tulis komentar..."
-                className="mb-2"
+      {/* Edit Modal */}
+      <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Post</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {editImage && (
+            <div className="mb-3 text-center">
+              <img
+                src={editImage}
+                alt="preview"
+                className="img-fluid rounded shadow-sm"
+                style={{ maxHeight: "200px", objectFit: "cover" }}
               />
-              <Button variant="primary">Kirim</Button>
             </div>
-          </Card.Body>
-        </Card>
-      ))}
+          )}
+          <Form>
+            <Form.Group>
+              <Form.Label>Caption</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={editCaption}
+                onChange={(e) => setEditCaption(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEdit(false)}>
+            Batal
+          </Button>
+          <Button variant="primary" onClick={handleEditSave}>
+            Simpan
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
-  )
+  );
 }
 
-export default PostPage
+export default PostPage;
