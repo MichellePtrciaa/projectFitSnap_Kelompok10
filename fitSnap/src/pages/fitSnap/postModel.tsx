@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom"; // ✅ gabungkan import
 import ApiClient from "../../utils/ApiClient";
 import { Modal, Button, Form } from "react-bootstrap";
 
@@ -12,6 +12,11 @@ type Post = {
   createdAt: string;
 };
 
+// helper untuk bikin URL gambar
+const getImageUrl = (path: string) => {
+  return `http://localhost:3000/${path}`; // ✅ backend expose /upload
+};
+
 function PostPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [darkMode, setDarkMode] = useState(false);
@@ -21,6 +26,8 @@ function PostPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editCaption, setEditCaption] = useState("");
   const [editImage, setEditImage] = useState<string | null>(null);
+
+  const navigate = useNavigate(); // ✅ inisialisasi navigate
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -46,7 +53,7 @@ function PostPage() {
     if (!confirmDelete) return;
 
     try {
-      await ApiClient.delete(`/post/${id}`); // ✅ ganti ke /post
+      await ApiClient.delete(`/post/${id}`);
       fetchPosts();
     } catch (error) {
       console.error("Gagal menghapus post:", error);
@@ -56,14 +63,14 @@ function PostPage() {
   const handleEditOpen = (id: string, currentCaption: string, imageUrl?: string) => {
     setEditId(id);
     setEditCaption(currentCaption);
-    setEditImage(imageUrl ? `http://localhost:3000/${imageUrl}` : null);
+    setEditImage(imageUrl ? getImageUrl(imageUrl) : null);
     setShowEdit(true);
   };
 
   const handleEditSave = async () => {
     if (!editId) return;
     try {
-      await ApiClient.put(`/post/${editId}`, { caption: editCaption }); // ✅ ganti ke /post
+      await ApiClient.put(`/post/${editId}`, { caption: editCaption });
       setShowEdit(false);
       setEditId(null);
       setEditCaption("");
@@ -71,6 +78,16 @@ function PostPage() {
       fetchPosts();
     } catch (error) {
       console.error("Gagal edit post:", error);
+    }
+  };
+
+  // ✅ fungsi untuk tombol Post
+  const handlePost = async (id: string) => {
+    try {
+      await ApiClient.put(`/post/${id}`, { isPosted: true });
+      navigate("/post"); // ✅ redirect ke halaman post
+    } catch (error) {
+      console.error("Gagal mem-publish post:", error);
     }
   };
 
@@ -91,7 +108,6 @@ function PostPage() {
           <NavLink to="/addPost" className="btn btn-dark btn-pill">
             ➕ Add
           </NavLink>
-          {/* Tombol Back ke Dashboard */}
           <NavLink to="/post" className="btn btn-outline-primary btn-pill">
             ⬅️ Dashboard
           </NavLink>
@@ -106,7 +122,7 @@ function PostPage() {
               {item.imageUrl && (
                 <div className="position-relative">
                   <img
-                    src={`http://localhost:3000/${item.imageUrl}`}
+                    src={getImageUrl(item.imageUrl)} // ✅ pakai helper
                     alt="post"
                     className="card-img-top rounded"
                     style={{ objectFit: "cover", height: "220px" }}
@@ -129,6 +145,12 @@ function PostPage() {
 
                 {/* Actions */}
                 <div className="d-flex justify-content-end gap-2">
+                  <button
+                    className="btn btn-sm btn-outline-success btn-pill"
+                    onClick={() => handlePost(item._id)}
+                  >
+                    🚀 Post
+                  </button>
                   <button
                     className="btn btn-sm btn-outline-warning btn-pill"
                     onClick={() =>
