@@ -82,14 +82,7 @@ function PostPage() {
   };
 
   // ✅ fungsi untuk tombol Post
-  const handlePost = async (id: string) => {
-    try {
-      await ApiClient.put(`/post/${id}`, { isPosted: true });
-      navigate("/post"); // ✅ redirect ke halaman post
-    } catch (error) {
-      console.error("Gagal mem-publish post:", error);
-    }
-  };
+
 
   return (
     <div className={`container py-4 ${darkMode ? "dark-mode" : ""}`}>
@@ -145,12 +138,7 @@ function PostPage() {
 
                 {/* Actions */}
                 <div className="d-flex justify-content-end gap-2">
-                  <button
-                    className="btn btn-sm btn-outline-success btn-pill"
-                    onClick={() => handlePost(item._id)}
-                  >
-                    🚀 Post
-                  </button>
+
                   <button
                     className="btn btn-sm btn-outline-warning btn-pill"
                     onClick={() =>

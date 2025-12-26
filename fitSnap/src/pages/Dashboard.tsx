@@ -20,12 +20,13 @@ function Dashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [darkMode, setDarkMode] = useState(false);
-  const [likedPosts, setLikedPosts] = useState<string[]>([]); // track post yg sudah di-like
+  const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const navigate = useNavigate();
 
   const fetchPosts = useCallback(async () => {
     try {
-      const response = await ApiClient.get("/progress?isPosted=true");
+      // ✅ ambil postingan dari /post yang sudah dipublish
+      const response = await ApiClient.get("/post?isPosted=true");
       if (response.status === 200) {
         const data = response.data;
         const postData = Array.isArray(data?.data)
@@ -48,8 +49,8 @@ function Dashboard() {
 
   const handleLike = async (id: string) => {
     try {
-      await ApiClient.post(`/progress/${id}/like`);
-      // update jumlah like langsung di state
+      // ✅ like ke /post/:id/like
+      await ApiClient.post(`/post/${id}/like`);
       setPosts((prev) =>
         prev.map((post) =>
           post._id === id
@@ -57,7 +58,6 @@ function Dashboard() {
             : post
         )
       );
-      // toggle status liked
       setLikedPosts((prev) =>
         prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
       );
@@ -87,9 +87,11 @@ function Dashboard() {
           <NavLink to="/signin" className="btn btn-outline-primary">
             Log Out
           </NavLink>
+          {/* ✅ tombol My Progress tetap ada */}
           <NavLink to="/progress" className="btn btn-outline-primary">
             My Progress
           </NavLink>
+          {/* ✅ tombol Post ke halaman postModel */}
           <NavLink to="/postModel" className="btn btn-outline-primary">
             Post
           </NavLink>
@@ -167,7 +169,8 @@ function Dashboard() {
                     <FaCommentDots /> {item.comments?.length ?? 0} Comment
                   </Button>
                 </div>
-                <CommentSection progressId={item._id} />
+                {/* ✅ gunakan postId */}
+                <CommentSection postId={item._id} />
               </div>
             </div>
           ))}
