@@ -75,7 +75,7 @@ function AddPost() {
   return (
     <div className="container mx-auto">
       <h2>Add Post</h2>
-      <NavLink to="/post" className="btn btn-secondary mb-3">
+      <NavLink to="/postModel" className="btn btn-secondary mb-3">
         Back
       </NavLink>
 
