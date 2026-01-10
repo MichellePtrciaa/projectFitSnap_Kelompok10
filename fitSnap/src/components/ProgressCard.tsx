@@ -1,5 +1,6 @@
 import CommentSection from "./CommentSection";
 import axios from "../utils/ApiClient.tsx"
+import type { Progress } from "../models/postModel.ts";
 
 const ProgressCard = ({ progress }: { progress: Progress }) => {
   const userId = "USER_LOGIN_ID"; // dari auth

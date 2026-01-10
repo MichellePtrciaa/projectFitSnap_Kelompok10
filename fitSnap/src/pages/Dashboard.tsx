@@ -1,41 +1,40 @@
 import { useCallback, useEffect, useState } from "react";
 import ApiClient from "../utils/ApiClient";
-import CommentSection from "../components/CommentSection";
 import { Button } from "react-bootstrap";
-import { FaHeart, FaCommentDots, FaUserCircle } from "react-icons/fa";
+import { FaHeart, FaUserCircle } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 import Masonry from "react-masonry-css";
 
-interface Post {
+/* ================= TYPE ================= */
+type Post = {
   _id: string;
-  userId: { username: string } | string;
-  imageUrl: string;
   caption: string;
-  likes: string[];
-  comments?: string[];
+  imageUrl: string;
+  userId: {
+    _id: string;
+    username: string;
+  };
   createdAt: string;
-}
+  likes?: string[];
+};
+
+/* ================= IMAGE HELPER ================= */
+const getImageUrl = (path: string) => {
+  return `http://localhost:3000/${path}`;
+};
 
 function Dashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const navigate = useNavigate();
 
+  /* ================= FETCH POSTS ================= */
   const fetchPosts = useCallback(async () => {
     try {
-      // ✅ ambil postingan dari /post yang sudah dipublish
-      const response = await ApiClient.get("/post?isPosted=true");
-      if (response.status === 200) {
-        const data = response.data;
-        const postData = Array.isArray(data?.data)
-          ? data.data
-          : Array.isArray(data)
-          ? data
-          : [];
-        setPosts(postData);
-      }
+      const res = await ApiClient.get("/post");
+      setPosts(res.data.data || []);
     } catch (error) {
       console.error("Gagal fetch posts:", error);
     } finally {
@@ -47,23 +46,18 @@ function Dashboard() {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleLike = async (id: string) => {
-    try {
-      // ✅ like ke /post/:id/like
-      await ApiClient.post(`/post/${id}/like`);
-      setPosts((prev) =>
-        prev.map((post) =>
-          post._id === id
-            ? { ...post, likes: [...post.likes, "dummyUser"] }
-            : post
-        )
-      );
-      setLikedPosts((prev) =>
-        prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
-      );
-    } catch (error) {
-      console.error("Gagal like post:", error);
-    }
+  /* ================= LIKE (LOCAL) ================= */
+  const handleLike = (postId: string) => {
+    setLikedPosts((prev) =>
+      prev.includes(postId)
+        ? prev.filter((id) => id !== postId)
+        : [...prev, postId]
+    );
+  };
+
+  /* ================= VIEW PROGRESS ================= */
+  const handleViewProgress = (postId: string, userId: string) => {
+    navigate(`/progress/${postId}?user=${userId}`);
   };
 
   const breakpointColumnsObj = {
@@ -74,31 +68,30 @@ function Dashboard() {
 
   return (
     <div className={`container py-4 ${darkMode ? "dark-mode" : ""}`}>
-      {/* Header */}
+      {/* ===== HEADER ===== */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold text-gradient">✨ FITSNAP</h2>
+        <h2 className="fw-bold">✨ FITSNAP</h2>
+
         <div className="d-flex gap-2 align-items-center">
           <button
-            className="btn btn-sm btn-pill btn-toggle"
+            className="btn btn-sm btn-outline-secondary"
             onClick={() => setDarkMode(!darkMode)}
           >
             {darkMode ? "☀️ Light" : "🌙 Dark"}
           </button>
-          <NavLink to="/signin" className="btn btn-outline-primary">
-            Log Out
-          </NavLink>
-          {/* ✅ tombol My Progress tetap ada */}
-          <NavLink to="/progress" className="btn btn-outline-primary">
-            My Progress
-          </NavLink>
-          {/* ✅ tombol Post ke halaman postModel */}
+
           <NavLink to="/postModel" className="btn btn-outline-primary">
             Post
           </NavLink>
+
+          <NavLink to="/progress" className="btn btn-outline-primary">
+            My Progress
+          </NavLink>
+
           <Button
             variant="primary"
             size="sm"
-            className="d-flex align-items-center gap-1 rounded-pill px-3"
+            className="d-flex align-items-center gap-1"
             onClick={() => navigate("/profile")}
           >
             <FaUserCircle size={18} /> Profile
@@ -106,20 +99,12 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Body */}
+      {/* ===== BODY ===== */}
       {loading ? (
-        <Masonry
-          breakpointCols={breakpointColumnsObj}
-          className="my-masonry-grid"
-          columnClassName="my-masonry-grid_column"
-        >
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="skeleton skeleton-card"></div>
-          ))}
-        </Masonry>
+        <p className="text-center text-muted">Loading...</p>
       ) : posts.length === 0 ? (
         <div className="text-center text-muted">
-          <p>Belum ada postingan yang dibagikan pengguna lain.</p>
+          <p>Belum ada postingan.</p>
         </div>
       ) : (
         <Masonry
@@ -127,50 +112,47 @@ function Dashboard() {
           className="my-masonry-grid"
           columnClassName="my-masonry-grid_column"
         >
-          {posts.map((item) => (
+          {posts.map((post) => (
             <div
-              key={item._id}
-              className="card border-0 shadow-sm mb-3 modern-card"
+              key={post._id}
+              className="card border-0 shadow-sm mb-3"
             >
               <img
-                src={`http://localhost:3000/${item.imageUrl}`}
+                src={getImageUrl(post.imageUrl)}
                 alt="post"
                 className="card-img-top"
-                style={{ objectFit: "cover", maxHeight: "400px" }}
+                style={{ objectFit: "cover", maxHeight: 400, cursor: "pointer" }}
+                onClick={() =>
+                  handleViewProgress(post._id, post.userId._id)
+                }
               />
+
               <div className="card-body">
-                <strong>
-                  @{item.userId && typeof item.userId !== "string"
-                    ? item.userId.username
-                    : item.userId ?? "unknown"}
-                </strong>
+                <strong>@{post.userId.username}</strong>
 
                 <div className="text-muted small mb-2">
-                  {new Date(item.createdAt).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
+                  {new Date(post.createdAt).toLocaleDateString("id-ID")}
                 </div>
-                <p>{item.caption}</p>
-                <div className="d-flex align-items-center gap-3 mb-2">
-                  <Button
-                    variant="link"
-                    className={`p-0 btn-like ${
-                      likedPosts.includes(item._id)
-                        ? "text-danger"
-                        : "text-muted"
-                    }`}
-                    onClick={() => handleLike(item._id)}
-                  >
-                    <FaHeart /> {item.likes?.length ?? 0}
-                  </Button>
-                  <Button variant="link" className="text-muted p-0">
-                    <FaCommentDots /> {item.comments?.length ?? 0} Comment
-                  </Button>
-                </div>
-                {/* ✅ gunakan postId */}
-                <CommentSection postId={item._id} />
+
+                <p>{post.caption}</p>
+
+                <Button
+                  variant="link"
+                  className={`p-0 ${
+                    likedPosts.includes(post._id)
+                      ? "text-danger"
+                      : "text-muted"
+                  }`}
+                  onClick={() => handleLike(post._id)}
+                >
+                  <FaHeart />{" "}
+                  {post.likes
+                    ? post.likes.length +
+                      (likedPosts.includes(post._id) ? 1 : 0)
+                    : likedPosts.includes(post._id)
+                    ? 1
+                    : 0}
+                </Button>
               </div>
             </div>
           ))}

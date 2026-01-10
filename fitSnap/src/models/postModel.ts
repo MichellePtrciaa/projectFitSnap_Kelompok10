@@ -1,15 +1,22 @@
+import type { ReactNode } from "react";
+
 export interface User {
     _id: string
     username: string
 }
 
 export interface Progress {
-    _id: string
-    userId: User
-    description: string
-    imageUrl?: string
-    likes: number
-    createdAt: string
+    likes: any;
+    username: ReactNode;
+    _id: string;
+    postId: string;
+    userId: {
+        _id: string;
+        username: string;
+    };
+    description: string;
+    imageUrl?: string;
+    createdAt: string;
 }
 
 export interface Comment {
@@ -22,7 +29,7 @@ export interface Comment {
 
 export interface PostModel {
     _id: string; 
-    userId: string; 
+    userId: User; 
     caption: string;
     imageUrl: string; 
     createdAt: string; 

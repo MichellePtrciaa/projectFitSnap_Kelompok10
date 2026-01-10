@@ -31,7 +31,7 @@ function PostPage() {
 
   const fetchPosts = useCallback(async () => {
     try {
-      const response = await ApiClient.get("/post");
+      const response = await ApiClient.get("/postModel");
       if (response.status === 200) {
         const sorted = (response.data.data || []).sort(
           (a: Post, b: Post) =>
@@ -53,7 +53,7 @@ function PostPage() {
     if (!confirmDelete) return;
 
     try {
-      await ApiClient.delete(`/post/${id}`);
+      await ApiClient.delete(`/postModel/${id}`);
       fetchPosts();
     } catch (error) {
       console.error("Gagal menghapus post:", error);
@@ -70,7 +70,7 @@ function PostPage() {
   const handleEditSave = async () => {
     if (!editId) return;
     try {
-      await ApiClient.put(`/post/${editId}`, { caption: editCaption });
+      await ApiClient.put(`/postModel/${editId}`, { caption: editCaption });
       setShowEdit(false);
       setEditId(null);
       setEditCaption("");

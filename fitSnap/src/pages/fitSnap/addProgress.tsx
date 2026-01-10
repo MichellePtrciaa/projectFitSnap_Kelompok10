@@ -1,48 +1,83 @@
-import { useState, type ChangeEvent, type FormEvent } from "react"
-import { Button, Form } from "react-bootstrap"
-import { NavLink, useNavigate } from "react-router"
-import ApiClient from "../../utils/ApiClient"
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import { Button, Form, Alert, Spinner } from "react-bootstrap";
+import { NavLink, useNavigate, useParams } from "react-router-dom";
+import ApiClient from "../../utils/ApiClient";
 
 function AddProgress() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { postId } = useParams<{ postId: string }>();
 
-  const [description, setDescription] = useState("")
-  const [image, setImage] = useState<File | null>(null)
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const formData = new FormData();
-  formData.append("description", description);
-  if (image) {
-    formData.append("image", image);
-  }
+    // validasi
+    if (!postId) {
+      setError("Post ID tidak ditemukan");
+      return;
+    }
+    if (!description.trim()) {
+      setError("Deskripsi wajib diisi");
+      return;
+    }
+    if (!image) {
+      setError("Foto wajib dipilih");
+      return;
+    }
 
-  
+    setError(null);
+    setLoading(true);
 
-  try {
-    const token = localStorage.getItem("token"); // ambil token
-    const response = await ApiClient.post("/progress", formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,   // tambahkan ini
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const formData = new FormData();
+    formData.append("description", description);
+    formData.append("image", image); // HARUS "image"
 
-    console.log("RESPONSE:", response);
-    navigate("/progress"); // redirect setelah sukses
-  } catch (error) {
-    console.error("ERROR POST:", error);
-  }
-};
+    try {
+      await ApiClient.post(
+        `/progress/${postId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
+      // sukses → balik ke detail post
+      navigate(`/post/${postId}`);
+    } catch (err) {
+      console.error("ERROR ADD PROGRESS:", err);
+      setError("Gagal menambahkan progress");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= IMAGE ================= */
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImage(file);
+    setPreview(file ? URL.createObjectURL(file) : null);
+  };
 
   return (
-    <div className="container mx-auto">
-      <h2>Add Progress</h2>
-      <NavLink to="/progress" className="btn btn-secondary mb-3">
-        Back
+    <div className="container py-4">
+      <h2 className="fw-bold mb-3">➕ Add Progress</h2>
+
+      <NavLink
+        to={`/post/${postId}`}
+        className="btn btn-outline-secondary mb-3"
+      >
+        ⬅️ Back
       </NavLink>
+
+      {error && <Alert variant="danger">{error}</Alert>}
 
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
@@ -50,7 +85,7 @@ function AddProgress() {
           <Form.Control
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            type="text"
+            placeholder="Tulis progress kamu..."
           />
         </Form.Group>
 
@@ -59,16 +94,34 @@ function AddProgress() {
           <Form.Control
             type="file"
             accept="image/*"
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setImage(e.target.files?.[0] || null)
-            }
+            onChange={handleImageChange}
           />
         </Form.Group>
 
-        <Button type="submit">Post</Button>
+        {preview && (
+          <div className="mb-3 text-center">
+            <img
+              src={preview}
+              alt="preview"
+              className="img-fluid rounded shadow-sm"
+              style={{ maxHeight: 260, objectFit: "cover" }}
+            />
+          </div>
+        )}
+
+        <Button type="submit" disabled={loading}>
+          {loading ? (
+            <>
+              <Spinner size="sm" animation="border" className="me-2" />
+              Uploading...
+            </>
+          ) : (
+            "Post Progress"
+          )}
+        </Button>
       </Form>
     </div>
-  )
+  );
 }
 
-export default AddProgress
+export default AddProgress;

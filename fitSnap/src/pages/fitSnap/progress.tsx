@@ -1,53 +1,85 @@
 import { useCallback, useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
 import ApiClient from "../../utils/ApiClient";
-import { type Progress } from "../../models/postModel.ts";
 import { Modal, Button, Form } from "react-bootstrap";
 
+/* ================= TYPE ================= */
+type Progress = {
+  _id: string;
+  postId: string;
+  userId: {
+    _id: string;
+    username: string;
+  };
+  description: string;
+  imageUrl?: string;
+  createdAt: string;
+};
+
+/* ================= IMAGE HELPER ================= */
+const getImageUrl = (path?: string) =>
+  path ? `http://localhost:3000/${path}` : "";
+
 function ProgressPage() {
+  const { postId } = useParams(); // 👈 ambil dari URL
   const [progress, setProgress] = useState<Progress[]>([]);
   const [darkMode, setDarkMode] = useState(false);
 
-  // state untuk modal edit
+  /* ===== modal edit ===== */
   const [showEdit, setShowEdit] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
   const [editImage, setEditImage] = useState<string | null>(null);
 
+  /* ================= FETCH ================= */
   const fetchProgress = useCallback(async () => {
-    const response = await ApiClient.get("/progress/draft"); // hanya draft
-    if (response.status === 200) {
-      setProgress(response.data.data || []);
+    try {
+      const endpoint = postId
+        ? `/progress/post/${postId}` // dari Dashboard
+        : `/progress/my`; // My Progress
+
+      const res = await ApiClient.get(endpoint);
+      setProgress(res.data.data || []);
+    } catch (error) {
+      console.error("Gagal fetch progress:", error);
     }
-  }, []);
+  }, [postId]);
 
   useEffect(() => {
     fetchProgress();
   }, [fetchProgress]);
 
+  /* ================= DELETE ================= */
   const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm("Yakin ingin menghapus progress ini?");
-    if (!confirmDelete) return;
+    if (!window.confirm("Yakin ingin menghapus progress ini?")) return;
 
     try {
       await ApiClient.delete(`/progress/${id}`);
       fetchProgress();
     } catch (error) {
-      console.error("Gagal menghapus progress:", error);
+      console.error("Gagal hapus progress:", error);
     }
   };
 
-  const handleEditOpen = (id: string, currentDesc: string, imageUrl?: string) => {
+  /* ================= EDIT ================= */
+  const handleEditOpen = (
+    id: string,
+    desc: string,
+    imageUrl?: string
+  ) => {
     setEditId(id);
-    setEditDesc(currentDesc);
-    setEditImage(imageUrl ? `http://localhost:3000/${imageUrl}` : null);
+    setEditDesc(desc);
+    setEditImage(getImageUrl(imageUrl));
     setShowEdit(true);
   };
 
   const handleEditSave = async () => {
     if (!editId) return;
+
     try {
-      await ApiClient.put(`/progress/${editId}`, { description: editDesc });
+      await ApiClient.put(`/progress/${editId}`, {
+        description: editDesc,
+      });
       setShowEdit(false);
       setEditId(null);
       setEditDesc("");
@@ -60,96 +92,97 @@ function ProgressPage() {
 
   return (
     <div className={`container py-4 ${darkMode ? "dark-mode" : ""}`}>
-      {/* Header */}
+      {/* ===== HEADER ===== */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold text-gradient">✨ FITSNAP</h2>
-        <div className="d-flex gap-3 align-items-center">
-          <i className="bi bi-bell-fill fs-5 text-primary"></i>
-          <i className="bi bi-person-circle fs-5 text-secondary"></i>
+        <h2 className="fw-bold">🏃 Progress</h2>
+
+        <div className="d-flex gap-2">
           <button
-            className="btn btn-sm btn-pill btn-toggle"
+            className="btn btn-sm btn-outline-secondary"
             onClick={() => setDarkMode(!darkMode)}
           >
             {darkMode ? "☀️ Light" : "🌙 Dark"}
           </button>
-          <NavLink to="/add-progress" className="btn btn-dark btn-pill">
-            ➕ Add
-          </NavLink>
-          {/* Tombol Back ke Dashboard */}
-          <NavLink to="/post" className="btn btn-outline-primary btn-pill">
+
+          {!postId && (
+            <NavLink to="/add-progress" className="btn btn-primary">
+              ➕ Add Progress
+            </NavLink>
+          )}
+
+          <NavLink to="/postModel" className="btn btn-outline-primary">
             ⬅️ Dashboard
           </NavLink>
         </div>
       </div>
 
-      {/* Grid Gallery */}
+      {/* ===== GRID ===== */}
       <div className="row row-cols-1 row-cols-md-3 g-4">
         {progress.map((item) => (
           <div key={item._id} className="col">
-            <div className="card h-100 shadow-sm border-0 modern-card">
+            <div className="card shadow-sm border-0 h-100">
               {item.imageUrl && (
-                <div className="position-relative">
-                  <img
-                    src={`http://localhost:3000/${item.imageUrl}`}
-                    alt="progress"
-                    className="card-img-top rounded"
-                    style={{ objectFit: "cover", height: "220px" }}
-                  />
-                  <div className="overlay d-flex justify-content-center align-items-center">
-                    <span>{item.description}</span>
-                  </div>
-                </div>
+                <img
+                  src={getImageUrl(item.imageUrl)}
+                  className="card-img-top"
+                  style={{ height: 220, objectFit: "cover" }}
+                />
               )}
 
               <div className="card-body">
-                <h6 className="fw-semibold mb-1">@{item.userId.username}</h6>
-                <p className="text-muted small mb-2">
-                  {new Date(item.createdAt).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
+                <h6>@{item.userId.username}</h6>
+
+                <p className="text-muted small">
+                  {new Date(item.createdAt).toLocaleDateString("id-ID")}
                 </p>
 
-                {/* Actions */}
-                <div className="d-flex justify-content-end gap-2">
-                  <button
-                    className="btn btn-sm btn-outline-warning btn-pill"
-                    onClick={() =>
-                      handleEditOpen(item._id, item.description, item.imageUrl)
-                    }
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    className="btn btn-sm btn-outline-secondary btn-pill"
-                    onClick={() => handleDelete(item._id)}
-                  >
-                    🗑️ Delete
-                  </button>
-                </div>
+                <p>{item.description}</p>
+
+                {!postId && (
+                  <div className="d-flex justify-content-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline-warning"
+                      onClick={() =>
+                        handleEditOpen(
+                          item._id,
+                          item.description,
+                          item.imageUrl
+                        )
+                      }
+                    >
+                      ✏️
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline-danger"
+                      onClick={() => handleDelete(item._id)}
+                    >
+                      🗑️
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Edit Modal */}
+      {/* ===== EDIT MODAL ===== */}
       <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Edit Progress</Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
           {editImage && (
-            <div className="mb-3 text-center">
-              <img
-                src={editImage}
-                alt="preview"
-                className="img-fluid rounded shadow-sm"
-                style={{ maxHeight: "200px", objectFit: "cover" }}
-              />
-            </div>
+            <img
+              src={editImage}
+              className="img-fluid rounded mb-3"
+            />
           )}
+
           <Form>
             <Form.Group>
               <Form.Label>Deskripsi</Form.Label>
@@ -162,6 +195,7 @@ function ProgressPage() {
             </Form.Group>
           </Form>
         </Modal.Body>
+
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowEdit(false)}>
             Batal
