@@ -35,13 +35,12 @@ const router = createBrowserRouter([
         },
       },
       {
-        path: "post/:postId/add-progress",
+        path: "add-progress",
         lazy: async () => {
           const module = await import("../pages/fitSnap/addProgress");
           return { Component: module.default };
         },
       },
-
       {
         path: "comment/:id",
         lazy: async () => {
@@ -53,13 +52,6 @@ const router = createBrowserRouter([
         path: "post",
         lazy: async () => {
           const module = await import("../pages/Dashboard");
-          return { Component: module.default };
-        },
-      },
-      {
-        path: "post/:postId",
-        lazy: async () => {
-          const module = await import("../pages/fitSnap/PostDetailPage");
           return { Component: module.default };
         },
       },

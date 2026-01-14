@@ -3,58 +3,78 @@ import ApiClient from "../utils/ApiClient";
 
 interface Comment {
   _id: string;
-  progressId: string;
-  userId: string;
-  username: string;
-  text: string;
+  postId: string;
+  comment: string;
   createdAt: string;
+  userId?:{
+    _id: string;
+    username: string;
+  }
 }
 
 interface Props {
-  progressId: string;
+  postId: string;
+  onCommentAdded?: () => void;
 }
 
-const CommentSection = ({ progressId }: Props) => {
+const CommentSection = ({ postId, onCommentAdded }: Props) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchComments = useCallback(async () => {
+    if(!postId) return;
+
     try {
       const response = await ApiClient.get(
-        `/progress/${progressId}/comments`
+        `/comment?postId=${postId}`
       );
 
       if (response.status === 200) {
-        setComments(response.data.data ?? response.data);
+        const data = response.data.data ?? response.data;
+
+        console.log("Isi Komentar", data);
+
+        const total = Array.isArray(data) ? data.length : 0;
+
+        setComments(Array.isArray(data) ? data : []);
+
+console.log("Jumlah Komen:", total);
       }
     } catch (error) {
       console.error("Gagal fetch comments:", error);
     } finally {
       setLoading(false);
     }
-  }, [progressId]);
+  }, [postId, onCommentAdded]);
 
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
 
   const submitComment = async () => {
-    if (!text.trim()) return;
+
+    if (!text.trim() || !postId){
+      console.log("Text / ID kosong");
+      return;
+    }
 
     try {
       const response = await ApiClient.post(
-        `/progress/${progressId}/comments`,
+        `/comment`,
         {
-          userId: "USER_ID",        // nanti ambil dari auth
-          username: "Michelle",    // nanti ambil dari auth
-          text,
+          postId,  // nanti ambil dari auth
+          comment:text   // nanti ambil dari auth
         }
       );
+      console.log("Response", response.data);
 
       if (response.status === 200 || response.status === 201) {
-        setComments(prev => [...prev, response.data]);
         setText("");
+        fetchComments();
+        console.log("🔥 COMMENT ADDED");
+
+        onCommentAdded?.();
       }
     } catch (error) {
       console.error("Gagal kirim komentar:", error);
@@ -72,7 +92,7 @@ const CommentSection = ({ progressId }: Props) => {
       ) : (
         comments.map(comment => (
           <div key={comment._id} className="mb-1">
-            <b>{comment.username}</b>: {comment.text}
+            <b>{comment.userId?.username || "User"}</b>: {comment.comment}
           </div>
         ))
       )}

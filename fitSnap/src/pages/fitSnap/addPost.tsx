@@ -1,17 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import {
-  Button,
-  Form,
-  Alert,
-  Toast,
-  ToastContainer,
-  Spinner,
-} from "react-bootstrap";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Button, Form, Alert, Toast, ToastContainer, Spinner } from "react-bootstrap";
+import { NavLink, useNavigate } from "react-router";
 import ApiClient from "../../utils/ApiClient";
-
-/* helper preview */
-const getPreviewUrl = (file: File) => URL.createObjectURL(file);
 
 function AddPost() {
   const navigate = useNavigate();
@@ -21,13 +11,12 @@ function AddPost() {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastVariant, setToastVariant] =
-    useState<"success" | "danger">("success");
+  const [toastVariant, setToastVariant] = useState<"success" | "danger">("success");
 
-  /* ================= SUBMIT ================= */
+  const [loading, setLoading] = useState(false);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -45,23 +34,30 @@ function AddPost() {
 
     const formData = new FormData();
     formData.append("caption", caption);
-    formData.append("image", image); // ✅ sesuai multer
+    formData.append("image", image); // ✅ harus "image" sesuai upload.single("image")
 
     try {
-      await ApiClient.post("/post", formData);
+      const token = localStorage.getItem("token");
+      const response = await ApiClient.post("/post", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // ❌ jangan set Content-Type manual, biar axios/fetch generate boundary otomatis
+        },
+      });
 
-      setToastMessage("Postingan berhasil ditambahkan!");
-      setToastVariant("success");
-      setShowToast(true);
+      console.log("RESPONSE:", response);
 
       setCaption("");
       setImage(null);
       setPreview(null);
 
-      // ⏱️ beri waktu toast tampil
-      setTimeout(() => navigate("/post"), 1200);
-    } catch (err) {
-      console.error("ERROR ADD POST:", err);
+      setToastMessage("Postingan berhasil ditambahkan!");
+      setToastVariant("success");
+      setShowToast(true);
+
+      setTimeout(() => navigate("/post"), 1500);
+    } catch (error) {
+      console.error("ERROR POST:", error);
       setToastMessage("Gagal menambahkan postingan");
       setToastVariant("danger");
       setShowToast(true);
@@ -70,19 +66,17 @@ function AddPost() {
     }
   };
 
-  /* ================= IMAGE ================= */
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setImage(file);
-    setPreview(file ? getPreviewUrl(file) : null);
+    setPreview(file ? URL.createObjectURL(file) : null);
   };
 
   return (
-    <div className="container py-4">
-      <h2 className="fw-bold mb-3">➕ Add Post</h2>
-
-      <NavLink to="/post" className="btn btn-outline-secondary mb-3">
-        ⬅️ Back
+    <div className="container mx-auto">
+      <h2>Add Post</h2>
+      <NavLink to="/postModel" className="btn btn-secondary mb-3">
+        Back
       </NavLink>
 
       {error && <Alert variant="danger">{error}</Alert>}
@@ -93,17 +87,14 @@ function AddPost() {
           <Form.Control
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
+            type="text"
             placeholder="Tulis caption..."
           />
         </Form.Group>
 
         <Form.Group className="mb-3">
           <Form.Label>Photo</Form.Label>
-          <Form.Control
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-          />
+          <Form.Control type="file" accept="image/*" onChange={handleImageChange} />
         </Form.Group>
 
         {preview && (
@@ -112,7 +103,7 @@ function AddPost() {
               src={preview}
               alt="preview"
               className="img-fluid rounded shadow-sm"
-              style={{ maxHeight: 260, objectFit: "cover" }}
+              style={{ maxHeight: "250px", objectFit: "cover" }}
             />
           </div>
         )}
@@ -120,13 +111,8 @@ function AddPost() {
         <Button type="submit" disabled={loading}>
           {loading ? (
             <>
-              <Spinner
-                as="span"
-                animation="border"
-                size="sm"
-                className="me-2"
-              />
-              Uploading...
+              <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />{" "}
+              Loading...
             </>
           ) : (
             "Post"
@@ -134,18 +120,15 @@ function AddPost() {
         </Button>
       </Form>
 
-      {/* TOAST */}
       <ToastContainer position="top-end" className="p-3">
         <Toast
           bg={toastVariant}
+          onClose={() => setShowToast(false)}
           show={showToast}
           delay={2000}
           autohide
-          onClose={() => setShowToast(false)}
         >
-          <Toast.Body className="text-white">
-            {toastMessage}
-          </Toast.Body>
+          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
     </div>
